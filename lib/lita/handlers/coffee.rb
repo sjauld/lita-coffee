@@ -6,7 +6,7 @@ module Lita
       require 'json'
 
       route(
-        /\(coffee\)(\s+\-[bcis]|\s+\+)?(.*)/i,
+        /\(coffee\)(\s+\-[bcis]?|\s+\+)?(.*)/i,
         :coffee,
         help: {
           '(coffee)' => "List the coffee orders",
@@ -61,7 +61,7 @@ module Lita
           response.reply("Thanks for ordering the (coffee)!\n--")
           get_coffee_orders.each do |order|
             response.reply("#{order}: #{get_coffee_preference(order)}")
-            send_coffee_message(order,response.user.name)
+            send_coffee_message(order,response.user.name) unless order == response.user.name
           end
           result = clear_orders
           if result == "OK"
@@ -112,7 +112,7 @@ module Lita
         Lita.redis.set("coffee-orders",orders)
       end
 
-      def clear_orders(user)
+      def clear_orders
         Lita.redis.set("coffee-orders",[])
       end
 
