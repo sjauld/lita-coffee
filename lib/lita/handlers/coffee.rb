@@ -5,7 +5,7 @@ module Lita
 
       route(
         /(coffee)/i,
-        :search,
+        :coffee,
         help: {
           '(coffee)' => "Coffee is yum"
         }
