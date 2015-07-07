@@ -88,7 +88,7 @@ module Lita
       #######
 
       def get_coffee_orders
-        JSON.parse(Lita.redis.get("coffee-orders"))
+        JSON.parse(Lita.redis.get("coffee-orders")) rescue []
       end
 
       def get_coffee_preference(user)
@@ -121,7 +121,7 @@ module Lita
         msg = Lita::Message.new(robot,'',Lita::Source.new(user: myuser))
         msg.reply("#{purchaser} has bought you a (coffee)!")
       rescue => e
-        Lita.logger.error("Coffee#send_coffee_message raised #{e.class}: #{e.message}\n#{e.backtrace}")        
+        Lita.logger.error("Coffee#send_coffee_message raised #{e.class}: #{e.message}\n#{e.backtrace}")
       end
 
 
