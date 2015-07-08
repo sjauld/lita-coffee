@@ -104,7 +104,7 @@ module Lita
           end
         # tests
         elsif system_settings
-          response.reply("Redis_prefix: #{REDIS_PREFIX}, @Redis_prefix: #{@REDIS_PREFIX}, @@Redis_prefix: #{@@REDIS_PREFIX}")
+          response.reply("@Redis_prefix: #{@REDIS_PREFIX}, @@Redis_prefix: #{@@REDIS_PREFIX}")
         # List the orders
         else
           response.reply("Current (coffee) orders for #{group}:-\n--")
