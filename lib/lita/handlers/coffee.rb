@@ -13,10 +13,13 @@ module Lita
       config :redis_prefix, type: String, default: 'lita-coffee'
       config :default_group, type: String, default: 'coffee-lovers'
       config :default_coffee, type: String, default: 'Single origin espresso'
+      on :loaded, :set_constants
 
-      REDIS_PREFIX    = config.redis_prefix
-      DEFAULT_GROUP   = config.default_group
-      DEFAULT_COFFEE  = config.default_coffee
+      def set_constants
+        @REDIS_PREFIX    = config.redis_prefix
+        @DEFAULT_GROUP   = config.default_group
+        @DEFAULT_COFFEE  = config.default_coffee
+      end
 
       route(
         /\(coffee\)(\s+\-[bcgis]?|\s+\+)?(.*)/i,
@@ -46,7 +49,7 @@ module Lita
         group = get_group(my_user)
 
         # Setup new users
-        response.reply("Welcome to (coffee)! You have been setup in the #{DEFAULT_GROUP} group with an order of #{DEFAULT_COFFEE}. Type help (coffee) for help.") if initialize_user_redis(my_user) == :new_user
+        response.reply("Welcome to (coffee)! You have been setup in the #{@DEFAULT_GROUP} group with an order of #{@DEFAULT_COFFEE}. Type help (coffee) for help.") if initialize_user_redis(my_user) == :new_user
 
         # Retrieve my preference
         if get_settings
@@ -112,8 +115,8 @@ module Lita
       #######
 
       def initialize_user_redis(user)
-        if Lita.redis.get("#{REDIS_PREFIX}-settings-#{user}").nil?
-          Lita.redis.set("#{REDIS_PREFIX}-settings-#{user}",{group: DEFAULT_GROUP, coffee: DEFAULT_COFFEE})
+        if Lita.redis.get("#{@REDIS_PREFIX}-settings-#{user}").nil?
+          Lita.redis.set("#{@REDIS_PREFIX}-settings-#{user}",{group: @DEFAULT_GROUP, coffee: @DEFAULT_COFFEE})
           return :new_user
         else
           return :existing_user
@@ -121,31 +124,31 @@ module Lita
       end
 
       def get_settings(user)
-        JSON.parse(Lita.redis.get("#{REDIS_PREFIX}-settings-#{user}")) rescue {group: DEFAULT_GROUP, coffee: DEFAULT_COFFEE}
+        JSON.parse(Lita.redis.get("#{@REDIS_PREFIX}-settings-#{user}")) rescue {group: @DEFAULT_GROUP, coffee: @DEFAULT_COFFEE}
       end
 
       def get_orders(group)
-        JSON.parse(Lita.redis.get("#{REDIS_PREFIX}-#{group}-orders")) rescue []
+        JSON.parse(Lita.redis.get("#{@REDIS_PREFIX}-#{group}-orders")) rescue []
       end
 
       def get_coffee(user)
-        JSON.parse(Lita.redis.get("#{REDIS_PREFIX}-settings-#{user}"))[:coffee] rescue DEFAULT_COFFEE
+        JSON.parse(Lita.redis.get("#{@REDIS_PREFIX}-settings-#{user}"))[:coffee] rescue @DEFAULT_COFFEE
       end
 
       def get_group(user)
-        JSON.parse(Lita.redis.get("#{REDIS_PREFIX}-settings-#{user}"))[:group] rescue DEFAULT_GROUP
+        JSON.parse(Lita.redis.get("#{@REDIS_PREFIX}-settings-#{user}"))[:group] rescue @DEFAULT_GROUP
       end
 
       def set_coffee(user,coffee)
         my_settings = get_settings(user)
         my_settings[:coffee] = coffee
-        Lita.redis.set("#{REDIS_PREFIX}-settings-#{user}",my_settings)
+        Lita.redis.set("#{@REDIS_PREFIX}-settings-#{user}",my_settings)
       end
 
       def set_coffee_group(user,group)
         my_settings = get_settings(user)
         my_settings[:group] = group
-        Lita.redis.set("#{REDIS_PREFIX}-settings-#{user}",my_settings)
+        Lita.redis.set("#{@REDIS_PREFIX}-settings-#{user}",my_settings)
       end
 
       def order_coffee(user)
@@ -153,18 +156,18 @@ module Lita
         orders = get_orders(group)
         orders << user
         orders.uniq!
-        Lita.redis.set("#{REDIS_PREFIX}-#{group}-orders",orders)
+        Lita.redis.set("#{@REDIS_PREFIX}-#{group}-orders",orders)
       end
 
       def cancel_coffee(user)
         group = get_group(user)
         orders = get_orders(group)
         orders.delete(user)
-        Lita.redis.set("#{REDIS_PREFIX}-#{group}-orders",orders)
+        Lita.redis.set("#{@REDIS_PREFIX}-#{group}-orders",orders)
       end
 
       def clear_orders(group)
-        Lita.redis.set("#{REDIS_PREFIX}-#{group}-orders",[])
+        Lita.redis.set("#{@REDIS_PREFIX}-#{group}-orders",[])
       end
 
       def send_coffee_message(user,purchaser,message)
