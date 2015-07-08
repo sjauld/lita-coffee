@@ -14,6 +14,10 @@ module Lita
       config :default_group, type: String, default: 'coffee-lovers'
       config :default_coffee, type: String, default: 'Single origin espresso'
 
+      REDIS_PREFIX    = config.redis_prefix
+      DEFAULT_GROUP   = config.default_group
+      DEFAULT_COFFEE  = config.default_coffee
+
       route(
         /\(coffee\)(\s+\-[bcgis]?|\s+\+)?(.*)/i,
         :coffee,
