@@ -14,9 +14,9 @@ module Lita
       config :default_group
       config :default_coffee
 
-      REDIS_PREFIX    = config.redis_prefix   || 'lita-coffee'
-      DEFAULT_GROUP   = config.default_group  || 'default'
-      DEFAULT_COFFEE  = config.default_coffee || 'Single origin espresso'
+      REDIS_PREFIX    = config.redis_prefix   rescue 'lita-coffee'
+      DEFAULT_GROUP   = config.default_group  rescue 'default'
+      DEFAULT_COFFEE  = config.default_coffee rescue 'Single origin espresso'
 
       route(
         /\(coffee\)(\s+\-[bcgist]?|\s+\+)?(.*)/i,
