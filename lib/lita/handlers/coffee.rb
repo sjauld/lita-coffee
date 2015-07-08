@@ -139,7 +139,7 @@ module Lita
       end
 
       def delete_user(user)
-        Lita.redis.delete("#{@@REDIS_PREFIX}-settings-#{user}")
+        Lita.redis.del("#{@@REDIS_PREFIX}-settings-#{user}")
       end
 
       def get_settings(user)
