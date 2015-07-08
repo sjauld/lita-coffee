@@ -171,10 +171,14 @@ module Lita
       end
 
       def order_coffee(user)
+        Lita.logger.debug("Old group: #{group}")
         group = get_group(user)
+        Lita.logger.debug("New group: #{group}")
         orders = get_orders(group)
+        Lita.logger.debug("Orders: #{orders}")
         orders << user
         orders.uniq!
+        Lita.logger.debug("New orders: #{orders}")
         Lita.redis.set("#{@@REDIS_PREFIX}-#{group}-orders",orders)
       end
 
