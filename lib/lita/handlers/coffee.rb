@@ -22,7 +22,7 @@ module Lita
       end
 
       route(
-        /\(coffee\)(\s+\-[bcgist]?|\s+\+)?(.*)/i,
+        /\(coffee\)(\s+\-[bcdgist]?|\s+\+)?(.*)/i,
         :coffee,
         help: {
           '(coffee)'                      => "List the (coffee) orders for your group",
@@ -32,6 +32,8 @@ module Lita
           '(coffee) +'                    => "Order a (coffee)",
           '(coffee) -c'                   => "Cancel your (coffee) order",
           '(coffee) -b You owe me one!'   => "Buy (coffee) for your group, clear the orders and send a message",
+          '(coffee) -t'                   => "Display (coffee) system settings",
+          '(coffee) -d'                   => "Delete you from the (coffee) system",
         }
       )
 
@@ -43,6 +45,7 @@ module Lita
         cancel          = response.matches[0][0].strip == "-c"  rescue false
         buy_coffee      = response.matches[0][0].strip == "-b"  rescue false
         system_settings = response.matches[0][0].strip == "-t"  rescue false
+        delete_me       = response.matches[0][0].strip == "-d"  rescue false
 
         preference      = response.matches[0][1].strip          rescue nil
 
@@ -63,6 +66,14 @@ module Lita
             response.reply("(coffee) set to #{preference}")
           else
             response.reply("(sadpanda) Failed to set your (coffee) for some reason: #{result.inspect}")
+          end
+        # Delete me altogether
+        elsif delete_me
+          result = delete_user(my_user)
+          if result == "OK"
+            response.reply("You have been deleted from (coffee)")
+          else
+            response.reply("(sadpanda) Failed to delete you from (coffee) for some reason: #{result.inspect}")
           end
         # Change my coffee group
         elsif change_group
@@ -103,7 +114,7 @@ module Lita
           end
         # tests
         elsif system_settings
-          response.reply("Redis_prefix: #{@@REDIS_PREFIX}")
+          response.reply("Redis prefix: #{@@REDIS_PREFIX}, Default coffee: #{@@DEFAULT_COFFEE}, Default group: #{@@DEFAULT_GROUP}")
         # List the orders
         else
           response.reply("Current (coffee) orders for #{group}:-\n--")
@@ -125,6 +136,10 @@ module Lita
         else
           return :existing_user
         end
+      end
+
+      def delete_user(user)
+        Lita.redis.delete("#{@@REDIS_PREFIX}-settings-#{user}")
       end
 
       def get_settings(user)
