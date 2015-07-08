@@ -10,13 +10,17 @@ module Lita
       # redis_prefix - use a custom prefix in case something happens to clash with the redis naming
       # default_group - the name of the default group in which users will order a coffee
       # default_coffee - the coffee we will order if users don't specify what they would like
-      config :redis_prefix
-      config :default_group
-      config :default_coffee
+      # config :redis_prefix
+      # config :default_group
+      # config :default_coffee
+      #
+      # REDIS_PREFIX    = config.redis_prefix   rescue 'lita-coffee'
+      # DEFAULT_GROUP   = config.default_group  rescue 'default'
+      # DEFAULT_COFFEE  = config.default_coffee rescue 'Single origin espresso'
 
-      REDIS_PREFIX    = config.redis_prefix   rescue 'lita-coffee'
-      DEFAULT_GROUP   = config.default_group  rescue 'default'
-      DEFAULT_COFFEE  = config.default_coffee rescue 'Single origin espresso'
+      REDIS_PREFIX    = 'lita-coffee'
+      DEFAULT_GROUP   = 'default'
+      DEFAULT_COFFEE  = 'Single origin espresso'
 
       route(
         /\(coffee\)(\s+\-[bcgist]?|\s+\+)?(.*)/i,
