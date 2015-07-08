@@ -15,7 +15,7 @@ module Lita
       config :default_coffee, type: String, default: 'Single origin espresso'
       on :loaded, :set_constants
 
-      def set_constants
+      def set_constants(payload)
         @REDIS_PREFIX    = config.redis_prefix
         @DEFAULT_GROUP   = config.default_group
         @DEFAULT_COFFEE  = config.default_coffee
