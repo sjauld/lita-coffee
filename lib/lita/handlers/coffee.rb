@@ -22,7 +22,7 @@ module Lita
       end
 
       route(
-        /\(coffee\)(\s+\-[bcdgist]?|\s+\+)?(.*)/i,
+        /^\(coffee\)(\s+\-[bcdgist]?|\s+\+)?(.*)/i,
         :coffee,
         help: {
           '(coffee)'                      => "List the (coffee) orders for your group",
