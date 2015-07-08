@@ -1,7 +1,10 @@
 module Lita
   module Handlers
     class Coffee < Handler
-      # TODO: money
+      # TODO: money - probably in a separate handler and maybe it already exists??
+
+      # Dependencies
+      require 'json'
 
       # Configuration
       # redis_prefix - use a custom prefix in case something happens to clash with the redis naming
@@ -15,10 +18,8 @@ module Lita
       DEFAULT_GROUP   = config.default_group  || 'default'
       DEFAULT_COFFEE  = config.default_coffee || 'Single origin espresso'
 
-      require 'json'
-
       route(
-        /\(coffee\)(\s+\-[bcgis]?|\s+\+)?(.*)/i,
+        /\(coffee\)(\s+\-[bcgist]?|\s+\+)?(.*)/i,
         :coffee,
         help: {
           '(coffee)'                      => "List the (coffee) orders for your group",
@@ -38,6 +39,7 @@ module Lita
         order           = response.matches[0][0].strip == "+"   rescue false
         cancel          = response.matches[0][0].strip == "-c"  rescue false
         buy_coffee      = response.matches[0][0].strip == "-b"  rescue false
+        test_only       = response.matches[0][0].strip == "-t"  rescue false
 
         preference      = response.matches[0][1].strip          rescue nil
 
@@ -96,6 +98,9 @@ module Lita
           else
             response.reply("(sadpanda) Failed to clear the (coffee) orders for some reason: #{result.inspect}")
           end
+        # test only
+        elsif test_only
+          send_coffee_message(my_user,'Test Only',nil)
         # List the orders
         else
           response.reply("Current (coffee) orders for #{group}:-\n--")
