@@ -13,9 +13,9 @@ module Lita
       config :redis_prefix, type: String, default: 'lita-coffee'
       config :default_group, type: String, default: 'coffee-lovers'
       config :default_coffee, type: String, default: 'Single origin espresso'
-      
+
       route(
-        /\(coffee\)(\s+\-[bcgist]?|\s+\+)?(.*)/i,
+        /\(coffee\)(\s+\-[bcgis]?|\s+\+)?(.*)/i,
         :coffee,
         help: {
           '(coffee)'                      => "List the (coffee) orders for your group",
@@ -35,7 +35,6 @@ module Lita
         order           = response.matches[0][0].strip == "+"   rescue false
         cancel          = response.matches[0][0].strip == "-c"  rescue false
         buy_coffee      = response.matches[0][0].strip == "-b"  rescue false
-        test_only       = response.matches[0][0].strip == "-t"  rescue false
 
         preference      = response.matches[0][1].strip          rescue nil
 
@@ -94,9 +93,6 @@ module Lita
           else
             response.reply("(sadpanda) Failed to clear the (coffee) orders for some reason: #{result.inspect}")
           end
-        # test only
-        elsif test_only
-          send_coffee_message(my_user,'Test Only',nil)
         # List the orders
         else
           response.reply("Current (coffee) orders for #{group}:-\n--")
