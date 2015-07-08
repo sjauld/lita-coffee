@@ -16,13 +16,15 @@ module Lita
       on :loaded, :set_constants
 
       def set_constants(payload)
+        REDIS_PREFIX     = config.redis_prefix
         @REDIS_PREFIX    = config.redis_prefix
+        @@REDIS_PREFIX   = config.redis_prefix
         @DEFAULT_GROUP   = config.default_group
         @DEFAULT_COFFEE  = config.default_coffee
       end
 
       route(
-        /\(coffee\)(\s+\-[bcgis]?|\s+\+)?(.*)/i,
+        /\(coffee\)(\s+\-[bcgist]?|\s+\+)?(.*)/i,
         :coffee,
         help: {
           '(coffee)'                      => "List the (coffee) orders for your group",
@@ -42,6 +44,7 @@ module Lita
         order           = response.matches[0][0].strip == "+"   rescue false
         cancel          = response.matches[0][0].strip == "-c"  rescue false
         buy_coffee      = response.matches[0][0].strip == "-b"  rescue false
+        system_settings = response.matches[0][0].strip == "-t"  rescue false
 
         preference      = response.matches[0][1].strip          rescue nil
 
@@ -100,6 +103,9 @@ module Lita
           else
             response.reply("(sadpanda) Failed to clear the (coffee) orders for some reason: #{result.inspect}")
           end
+        # tests
+        elsif system_settings
+          response.reply("Redis_prefix: #{REDIS_PREFIX}, @Redis_prefix: #{@REDIS_PREFIX}, @@Redis_prefix: #{@@REDIS_PREFIX}")
         # List the orders
         else
           response.reply("Current (coffee) orders for #{group}:-\n--")
