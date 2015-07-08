@@ -16,7 +16,6 @@ module Lita
       on :loaded, :set_constants
 
       def set_constants(payload)
-        REDIS_PREFIX     = config.redis_prefix
         @REDIS_PREFIX    = config.redis_prefix
         @@REDIS_PREFIX   = config.redis_prefix
         @DEFAULT_GROUP   = config.default_group
