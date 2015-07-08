@@ -25,7 +25,7 @@ module Lita
           '(coffee)'                      => "List the (coffee) orders for your group",
           '(coffee) -i'                   => "Display your (coffee) profile",
           '(coffee) -s Colombian Filter'  => "Set your (coffee) preference",
-          '(coffee) -g Cool Kids'         => "Change your (coffee) group"
+          '(coffee) -g Cool Kids'         => "Change your (coffee) group",
           '(coffee) +'                    => "Order a (coffee)",
           '(coffee) -c'                   => "Cancel your (coffee) order",
           '(coffee) -b You owe me one!'   => "Buy (coffee) for your group, clear the orders and send a message",
