@@ -53,7 +53,7 @@ module Lita
         group = get_group(my_user)
 
         # Setup new users
-        response.reply("Welcome to (coffee)! You have been setup in the #{@DEFAULT_GROUP} group with an order of #{@DEFAULT_COFFEE}. Type help (coffee) for help.") if initialize_user_redis(my_user) == :new_user
+        response.reply("Welcome to (coffee)! You have been setup in the #{@@DEFAULT_GROUP} group with an order of #{@@DEFAULT_COFFEE}. Type help (coffee) for help.") if initialize_user_redis(my_user) == :new_user
 
         # Retrieve my preference
         if get_settings
@@ -70,7 +70,7 @@ module Lita
         # Delete me altogether
         elsif delete_me
           result = delete_user(my_user)
-          if result == "OK"
+          if result == 1
             response.reply("You have been deleted from (coffee)")
           else
             response.reply("(sadpanda) Failed to delete you from (coffee) for some reason: #{result.inspect}")
