@@ -50,71 +50,71 @@ module Lita
         group = get_group(my_user)
 
         # Setup new users
-        response.reply("Welcome to (coffee)! You have been setup in the #{@@DEFAULT_GROUP} group with an order of #{@@DEFAULT_COFFEE}. Type help (coffee) for help.") if initialize_user_redis(my_user) == :new_user
+        response.reply("Welcome to coffee! You have been added to the #{@@DEFAULT_GROUP} group with an order of #{@@DEFAULT_COFFEE}. Type help coffee for help.") if initialize_user_redis(my_user) == :new_user
 
         # Retrieve my preference
         if get_settings
           settings = get_settings(my_user)
-          response.reply("Your current (coffee) is #{settings['coffee']}. You are in the #{settings['group']} group.")
+          response.reply("Your current coffee is #{settings['coffee']}. You are in the #{settings['group']} group.")
         # Set my coffee
         elsif set_coffee
           result = set_coffee(my_user,preference)
           if result == "OK"
-            response.reply("(coffee) set to #{preference}")
+            response.reply("Coffee set to #{preference}")
           else
-            response.reply("(sadpanda) Failed to set your (coffee) for some reason: #{result.inspect}")
+            response.reply("(sadpanda) Failed to set your coffee for some reason: #{result.inspect}")
           end
         # Delete me altogether
         elsif delete_me
           result = delete_user(my_user)
           if result == 1
-            response.reply("You have been deleted from (coffee)")
+            response.reply("You have been deleted from coffee")
           else
-            response.reply("(sadpanda) Failed to delete you from (coffee) for some reason: #{result.inspect}")
+            response.reply("(sadpanda) Failed to delete you from coffee for some reason: #{result.inspect}")
           end
         # Change my coffee group
         elsif change_group
           result = set_coffee_group(my_user,preference)
           if result == "OK"
-            response.reply("(coffee) group set to #{preference}")
+            response.reply("Group set to #{preference}")
           else
-            response.reply("(sadpanda) Failed to set your (coffee) group for some reason: #{result.inspect}")
+            response.reply("(sadpanda) Failed to set your coffee group for some reason: #{result.inspect}")
           end
         # Order a coffee
         elsif order
           result = order_coffee(my_user)
           if result == "OK"
-            response.reply("Ordered you a (coffee)")
+            response.reply("Ordered you a coffee")
           else
-            response.reply("(sadpanda) Failed to order your (coffee) for some reason: #{result.inspect}")
+            response.reply("(sadpanda) Failed to order your coffee for some reason: #{result.inspect}")
           end
         # Cancel a coffee
         elsif cancel
           result = cancel_coffee(my_user)
           if result == "OK"
-            response.reply("Cancelled your (coffee)")
+            response.reply("Cancelled your coffee")
           else
-            response.reply("(sadpanda) Failed to cancel your (coffee) for some reason: #{result.inspect}")
+            response.reply("(sadpanda) Failed to cancel your coffee for some reason: #{result.inspect}")
           end
         # Buy the coffees and clear the orders
         elsif buy_coffee
-          response.reply("Thanks for ordering the (coffee) for #{group}!\n--")
+          response.reply("Thanks for ordering the coffee for #{group}!\n--")
           get_orders(group).each do |order|
             response.reply("#{order}: #{get_coffee(order)}")
             send_coffee_message(order,my_user,preference) unless order == my_user
           end
           result = clear_orders(group)
           if result == "OK"
-            response.reply("Cleared all (coffee) orders for #{group}")
+            response.reply("Cleared all orders for #{group}")
           else
-            response.reply("(sadpanda) Failed to clear the (coffee) orders for some reason: #{result.inspect}")
+            response.reply("(sadpanda) Failed to clear the orders for some reason: #{result.inspect}")
           end
         # tests
         elsif system_settings
           response.reply("Default coffee: #{@@DEFAULT_COFFEE}, Default group: #{@@DEFAULT_GROUP}")
         # List the orders
         else
-          response.reply("Current (coffee) orders for #{group}:-\n--")
+          response.reply("Current orders for #{group}:-\n--")
           get_orders(group).each do |order|
             response.reply("#{order}: #{get_coffee(order)}")
           end
@@ -192,7 +192,7 @@ module Lita
       def send_coffee_message(user,purchaser,message)
         myuser = Lita::User.find_by_name(user)
         msg = Lita::Message.new(robot,'',Lita::Source.new(user: myuser))
-        msg.reply("#{purchaser} has bought you a (coffee)!")
+        msg.reply("#{purchaser} has bought you a coffee!")
         msg.reply(message) # what happens if message is nil?
       rescue => e
         Lita.logger.error("Coffee#send_coffee_message raised #{e.class}: #{e.message}\n#{e.backtrace}")
