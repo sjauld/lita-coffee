@@ -7,16 +7,13 @@ module Lita
       require 'json'
 
       # Configuration
-      # redis_prefix - use a custom prefix in case something happens to clash with the redis naming
       # default_group - the name of the default group in which users will order a coffee
       # default_coffee - the coffee we will order if users don't specify what they would like
-      config :redis_prefix, type: String, default: 'lita-coffee'
       config :default_group, type: String, default: 'coffee-lovers'
       config :default_coffee, type: String, default: 'Single origin espresso'
       on :loaded, :set_constants
 
       def set_constants(payload)
-        @@REDIS_PREFIX   = config.redis_prefix
         @@DEFAULT_GROUP   = config.default_group
         @@DEFAULT_COFFEE  = config.default_coffee
       end
@@ -114,7 +111,7 @@ module Lita
           end
         # tests
         elsif system_settings
-          response.reply("Redis prefix: #{@@REDIS_PREFIX}, Default coffee: #{@@DEFAULT_COFFEE}, Default group: #{@@DEFAULT_GROUP}")
+          response.reply("Default coffee: #{@@DEFAULT_COFFEE}, Default group: #{@@DEFAULT_GROUP}")
         # List the orders
         else
           response.reply("Current (coffee) orders for #{group}:-\n--")
@@ -130,8 +127,8 @@ module Lita
       #######
 
       def initialize_user_redis(user)
-        if redis.get("#{@@REDIS_PREFIX}-settings-#{user}").nil?
-          redis.set("#{@@REDIS_PREFIX}-settings-#{user}",{group: @@DEFAULT_GROUP, coffee: @@DEFAULT_COFFEE})
+        if redis.get("settings-#{user}").nil?
+          redis.set("settings-#{user}",{group: @@DEFAULT_GROUP, coffee: @@DEFAULT_COFFEE})
           return :new_user
         else
           return :existing_user
@@ -139,58 +136,57 @@ module Lita
       end
 
       def delete_user(user)
-        redis.del("#{@@REDIS_PREFIX}-settings-#{user}")
+        redis.del("settings-#{user}")
       end
 
       def get_settings(user)
-        JSON.parse(redis.get("#{@@REDIS_PREFIX}-settings-#{user}")) rescue {group: @@DEFAULT_GROUP, coffee: @@DEFAULT_COFFEE}
+        JSON.parse(redis.get("settings-#{user}")) rescue {group: @@DEFAULT_GROUP, coffee: @@DEFAULT_COFFEE}
       end
 
       def get_orders(group)
-        JSON.parse(redis.get("#{@@REDIS_PREFIX}-#{group}-orders")) rescue []
+        JSON.parse(redis.get("#{group}-orders")) rescue []
       end
 
       def get_coffee(user)
-        JSON.parse(redis.get("#{@@REDIS_PREFIX}-settings-#{user}"))[:coffee] rescue @@DEFAULT_COFFEE
+        JSON.parse(redis.get("settings-#{user}"))[:coffee] rescue @@DEFAULT_COFFEE
       end
 
       def get_group(user)
-        JSON.parse(redis.get("#{@@REDIS_PREFIX}-settings-#{user}"))[:group] rescue @@DEFAULT_GROUP
+        JSON.parse(redis.get("settings-#{user}"))[:group] rescue @@DEFAULT_GROUP
       end
 
       def set_coffee(user,coffee)
         my_settings = get_settings(user)
         my_settings[:coffee] = coffee
-        redis.set("#{@@REDIS_PREFIX}-settings-#{user}",my_settings)
+        redis.set("settings-#{user}",my_settings)
       end
 
       def set_coffee_group(user,group)
         my_settings = get_settings(user)
         my_settings[:group] = group
-        redis.set("#{@@REDIS_PREFIX}-settings-#{user}",my_settings)
+        redis.set("settings-#{user}",my_settings)
       end
 
       def order_coffee(user)
-        Lita.logger.debug("Old group: #{group}")
         group = get_group(user)
-        Lita.logger.debug("New group: #{group}")
+        Lita.logger.debug("Group: #{group}")
         orders = get_orders(group)
         Lita.logger.debug("Orders: #{orders}")
         orders << user
         orders.uniq!
         Lita.logger.debug("New orders: #{orders}")
-        redis.set("#{@@REDIS_PREFIX}-#{group}-orders",orders)
+        redis.set("#{group}-orders",orders)
       end
 
       def cancel_coffee(user)
         group = get_group(user)
         orders = get_orders(group)
         orders.delete(user)
-        redis.set("#{@@REDIS_PREFIX}-#{group}-orders",orders)
+        redis.set("#{group}-orders",orders)
       end
 
       def clear_orders(group)
-        redis.set("#{@@REDIS_PREFIX}-#{group}-orders",[])
+        redis.set("#{group}-orders",[])
       end
 
       def send_coffee_message(user,purchaser,message)
