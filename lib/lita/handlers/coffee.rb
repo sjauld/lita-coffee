@@ -119,7 +119,7 @@ module Lita
         else
           response.reply("Current (coffee) orders for #{group}:-\n--")
           get_orders(group).each do |order|
-            response.reply("#{order}: #{get_coffee_preference(order)}")
+            response.reply("#{order}: #{get_coffee(order)}")
           end
         end
 
@@ -130,8 +130,8 @@ module Lita
       #######
 
       def initialize_user_redis(user)
-        if Lita.redis.get("#{@@REDIS_PREFIX}-settings-#{user}").nil?
-          Lita.redis.set("#{@@REDIS_PREFIX}-settings-#{user}",{group: @@DEFAULT_GROUP, coffee: @@DEFAULT_COFFEE})
+        if redis.get("#{@@REDIS_PREFIX}-settings-#{user}").nil?
+          redis.set("#{@@REDIS_PREFIX}-settings-#{user}",{group: @@DEFAULT_GROUP, coffee: @@DEFAULT_COFFEE})
           return :new_user
         else
           return :existing_user
@@ -139,35 +139,35 @@ module Lita
       end
 
       def delete_user(user)
-        Lita.redis.del("#{@@REDIS_PREFIX}-settings-#{user}")
+        redis.del("#{@@REDIS_PREFIX}-settings-#{user}")
       end
 
       def get_settings(user)
-        JSON.parse(Lita.redis.get("#{@@REDIS_PREFIX}-settings-#{user}")) rescue {group: @@DEFAULT_GROUP, coffee: @@DEFAULT_COFFEE}
+        JSON.parse(redis.get("#{@@REDIS_PREFIX}-settings-#{user}")) rescue {group: @@DEFAULT_GROUP, coffee: @@DEFAULT_COFFEE}
       end
 
       def get_orders(group)
-        JSON.parse(Lita.redis.get("#{@@REDIS_PREFIX}-#{group}-orders")) rescue []
+        JSON.parse(redis.get("#{@@REDIS_PREFIX}-#{group}-orders")) rescue []
       end
 
       def get_coffee(user)
-        JSON.parse(Lita.redis.get("#{@@REDIS_PREFIX}-settings-#{user}"))[:coffee] rescue @@DEFAULT_COFFEE
+        JSON.parse(redis.get("#{@@REDIS_PREFIX}-settings-#{user}"))[:coffee] rescue @@DEFAULT_COFFEE
       end
 
       def get_group(user)
-        JSON.parse(Lita.redis.get("#{@@REDIS_PREFIX}-settings-#{user}"))[:group] rescue @@DEFAULT_GROUP
+        JSON.parse(redis.get("#{@@REDIS_PREFIX}-settings-#{user}"))[:group] rescue @@DEFAULT_GROUP
       end
 
       def set_coffee(user,coffee)
         my_settings = get_settings(user)
         my_settings[:coffee] = coffee
-        Lita.redis.set("#{@@REDIS_PREFIX}-settings-#{user}",my_settings)
+        redis.set("#{@@REDIS_PREFIX}-settings-#{user}",my_settings)
       end
 
       def set_coffee_group(user,group)
         my_settings = get_settings(user)
         my_settings[:group] = group
-        Lita.redis.set("#{@@REDIS_PREFIX}-settings-#{user}",my_settings)
+        redis.set("#{@@REDIS_PREFIX}-settings-#{user}",my_settings)
       end
 
       def order_coffee(user)
@@ -179,18 +179,18 @@ module Lita
         orders << user
         orders.uniq!
         Lita.logger.debug("New orders: #{orders}")
-        Lita.redis.set("#{@@REDIS_PREFIX}-#{group}-orders",orders)
+        redis.set("#{@@REDIS_PREFIX}-#{group}-orders",orders)
       end
 
       def cancel_coffee(user)
         group = get_group(user)
         orders = get_orders(group)
         orders.delete(user)
-        Lita.redis.set("#{@@REDIS_PREFIX}-#{group}-orders",orders)
+        redis.set("#{@@REDIS_PREFIX}-#{group}-orders",orders)
       end
 
       def clear_orders(group)
-        Lita.redis.set("#{@@REDIS_PREFIX}-#{group}-orders",[])
+        redis.set("#{@@REDIS_PREFIX}-#{group}-orders",[])
       end
 
       def send_coffee_message(user,purchaser,message)
