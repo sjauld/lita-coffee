@@ -55,7 +55,7 @@ module Lita
         # Retrieve my preference
         if get_settings
           settings = get_settings(my_user)
-          response.reply("Your current (coffee) is #{settings[:coffee]}. You are in the #{settings[:group]} group.")
+          response.reply("Your current (coffee) is #{settings['coffee']}. You are in the #{settings['group']} group.")
         # Set my coffee
         elsif set_coffee
           result = set_coffee(my_user,preference)
@@ -128,7 +128,7 @@ module Lita
 
       def initialize_user_redis(user)
         if redis.get("settings-#{user}").nil?
-          redis.set("settings-#{user}",{group: @@DEFAULT_GROUP, coffee: @@DEFAULT_COFFEE})
+          redis.set("settings-#{user}",{group: @@DEFAULT_GROUP, coffee: @@DEFAULT_COFFEE}.to_json)
           return :new_user
         else
           return :existing_user
@@ -148,23 +148,23 @@ module Lita
       end
 
       def get_coffee(user)
-        JSON.parse(redis.get("settings-#{user}"))[:coffee] rescue @@DEFAULT_COFFEE
+        JSON.parse(redis.get("settings-#{user}"))['coffee'] rescue @@DEFAULT_COFFEE
       end
 
       def get_group(user)
-        JSON.parse(redis.get("settings-#{user}"))[:group] rescue @@DEFAULT_GROUP
+        JSON.parse(redis.get("settings-#{user}"))['group'] rescue @@DEFAULT_GROUP
       end
 
       def set_coffee(user,coffee)
         my_settings = get_settings(user)
         my_settings[:coffee] = coffee
-        redis.set("settings-#{user}",my_settings)
+        redis.set("settings-#{user}",my_settings.to_json)
       end
 
       def set_coffee_group(user,group)
         my_settings = get_settings(user)
         my_settings[:group] = group
-        redis.set("settings-#{user}",my_settings)
+        redis.set("settings-#{user}",my_settings.to_json)
       end
 
       def order_coffee(user)
@@ -175,14 +175,14 @@ module Lita
         orders << user
         orders.uniq!
         Lita.logger.debug("New orders: #{orders}")
-        redis.set("#{group}-orders",orders)
+        redis.set("#{group}-orders",orders.to_json)
       end
 
       def cancel_coffee(user)
         group = get_group(user)
         orders = get_orders(group)
         orders.delete(user)
-        redis.set("#{group}-orders",orders)
+        redis.set("#{group}-orders",orders.to_json)
       end
 
       def clear_orders(group)
