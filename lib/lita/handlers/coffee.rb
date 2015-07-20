@@ -22,15 +22,15 @@ module Lita
         /^\(?coffee\)?(\s+\-[bcdgist]?|\s+\+)?(.*)/i,
         :coffee,
         help: {
-          '(coffee)'                      => "List the (coffee) orders for your group",
-          '(coffee) -i'                   => "Display your (coffee) profile",
-          '(coffee) -s Colombian Filter'  => "Set your (coffee) preference",
-          '(coffee) -g Cool Kids'         => "Change your (coffee) group",
-          '(coffee) +'                    => "Order a (coffee)",
-          '(coffee) -c'                   => "Cancel your (coffee) order",
-          '(coffee) -b You owe me one!'   => "Buy (coffee) for your group, clear the orders and send a message",
-          '(coffee) -t'                   => "Display (coffee) system settings",
-          '(coffee) -d'                   => "Delete you from the (coffee) system",
+          'coffee'                      => "List the orders for your group",
+          'coffee -i'                   => "Display your profile",
+          'coffee -s Colombian Filter'  => "Set your coffee preference",
+          'coffee -g Cool Kids'         => "Change your group",
+          'coffee +'                    => "Order a coffee",
+          'coffee -c'                   => "Cancel your order",
+          'coffee -b You owe me one!'   => "Buy coffee for your group, clear the orders and send a message to each coffee drinker",
+          'coffee -t'                   => "Display system settings",
+          'coffee -d'                   => "Delete you from the coffee system",
         }
       )
 
