@@ -11,7 +11,7 @@ describe Lita::Handlers::Coffee, lita_handler: true do
 
     it 'sets up a user if they do not exist already' do
       send_message("coffee")
-      expect(replies.first).to start_with("Welcome to coffee!") #TODO: test for defaults here?
+      expect(replies.first).to start_with("Welcome to coffee!")
     end
 
     it 'lists the current coffee orders if no options received' do
@@ -21,7 +21,9 @@ describe Lita::Handlers::Coffee, lita_handler: true do
 
     it 'orders me a coffee if I ask it!' do
       send_message("coffee +")
-      expect(replies.last).to eq("Ordered you a coffee") #TODO: test that it has been added to the queue?
+      expect(replies.last).to eq("Ordered you a coffee")
+      send_message("coffee")
+      expect(replies.last).to start_with("Test User:")
     end
 
     it 'displays my profile settings' do
@@ -44,8 +46,13 @@ describe Lita::Handlers::Coffee, lita_handler: true do
     end
 
     it 'cancels my order' do
+      send_message("coffee +")
+      order_a_coffee('stu')
+      order_a_coffee('joel')
+      expect(coffees_in_the_queue).to eq(3)
       send_message("coffee -c")
       expect(replies.last).to eq("Cancelled your coffee") #TODO: check that my name has been removed from the queue
+      expect(coffees_in_the_queue).to eq(2)
     end
 
     it 'deletes me from the system' do
@@ -59,11 +66,23 @@ describe Lita::Handlers::Coffee, lita_handler: true do
     end
 
     it 'buys the coffees and clears the queue' do
-      send_message("coffee +")
+      order_a_coffee('stu')
+      order_a_coffee('joel')
       send_message("coffee -b")
       expect(replies.last).to start_with("Cleared all orders")
       send_message("coffee")
       expect(replies.last).to end_with("--")
+      expect(replies.select{|x| x == "Test User has bought you a coffee!"}.count).to eq(2)
+    end
+
+    def order_a_coffee(user)
+      user = Lita::User.create(1,name: user)
+      send_message('coffee +', as: user)
+    end
+
+    def coffees_in_the_queue
+      send_message('coffee')  
+      replies.reverse.slice(0,replies.reverse.index{|x| ( x =~ /^Current orders/ ) == 0}).count
     end
 
 
