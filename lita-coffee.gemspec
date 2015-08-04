@@ -1,6 +1,8 @@
+require 'lita-coffee/version'
+
 Gem::Specification.new do |spec|
   spec.name          = 'lita-coffee'
-  spec.version       = '0.0.1'
+  spec.version       = LitaCoffee::VERSION
   spec.authors       = ['Stuart Auld']
   spec.email         = ['sja@marsupialmusic.net']
   spec.description   = %q{Lita integration to manage office coffee orders}
