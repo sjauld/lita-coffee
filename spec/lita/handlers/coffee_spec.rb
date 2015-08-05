@@ -105,6 +105,13 @@ describe Lita::Handlers::Coffee, lita_handler: true do
       expect(replies.last).to start_with("The following groups are active:-")
     end
 
+    it 'gets some stats' do
+      populate_the_database
+      buy_coffees_for('cool kids')
+      send_message("coffee -w cool kids")
+      expect(replies.last).to start_with("Who owes whom?")
+    end
+
     def set_prefs(name,opts={})
       user = init_user(name)
       send_message("coffee -g #{opts[:group]}", as: user) unless opts[:group].nil?

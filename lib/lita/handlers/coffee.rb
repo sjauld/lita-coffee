@@ -11,7 +11,7 @@ module Lita
       # default_coffee - the coffee we will order if users don't specify what they would like
       config :default_group, type: String, default: 'coffee-lovers'
       config :default_coffee, type: String, default: 'Single origin espresso'
-      config :default_timeout, type: Integer, default: 604800
+      config :default_timeout, type: Integer, default: 28800
       on :loaded, :set_constants
 
       def set_constants(payload)
@@ -95,7 +95,7 @@ module Lita
 
       # Display system settings
       route(
-        /^\s*\(?coffee\)?\s+\-t\s*(.*)$/i,
+        /^\s*\(?coffee\)?\s+\-t\s*$/i,
         :system_settings,
         help: {
           'coffee -t'                   => "Display system settings",
@@ -104,7 +104,7 @@ module Lita
 
       # Delete me
       route(
-        /^\s*\(?coffee\)?\s+\-d\s*(.*)$/i,
+        /^\s*\(?coffee\)?\s+\-d\s*$/i,
         :delete_me,
         help: {
           'coffee -d'                   => "Delete you from the coffee system",
@@ -113,10 +113,19 @@ module Lita
 
       # List all groups
       route(
-        /^\s*\(?coffee\)?\s+\-l\s*(.*)$/i,
+        /^\s*\(?coffee\)?\s+\-l\s*$/i,
         :list_groups,
         help: {
           'coffee -l'                   => "List the available coffee groups",
+        }
+      )
+
+      # Coffee stats a.k.a. who owes whom?
+      route(
+        /^\s*\(?coffee\)?\s+\-w\s*(.*)$/i,
+        :show_stats,
+        help: {
+          'coffee -w'                   => "Show stats for a group",
         }
       )
 
@@ -193,16 +202,19 @@ module Lita
 
       # Buy all the coffee for your group
       def buy_coffees(response)
-        puts "Running buy_coffees"
         group = get_group(response.user.name)
         message = response.matches[0][0].strip rescue nil
         response.reply("Thanks for ordering the coffee for #{group}!\n--")
+        stats = get_coffee_stats(group)
         get_orders(group).each do |order|
           response.reply("#{order}: #{get_coffee(order)}")
           send_coffee_message(order,response.user.name,message) unless order == response.user.name
+          stats[order] -= 1 rescue stats[order] = -1
+          stats[response.user.name] += 1 rescue stats[response.user.name] = 1
         end
+        set_coffee_stats(group,stats)
         result = clear_orders(group)
-        if result == "OK"
+        if result == 1
           response.reply("Cleared all orders for #{group}")
         else
           response.reply("(sadpanda) Failed to clear the orders for some reason: #{result.inspect}")
@@ -226,13 +238,28 @@ module Lita
 
       # List groups
       def list_groups(response)
-        groups = redis.keys('orders:*')
+        groups = redis.keys('stats:*')
         response.reply("The following groups are active:-\n--\n#{groups.map{|g| g.split(':')[1]}.join("\n")}")
+      end
+
+      # Display the stats
+      def show_stats(response)
+        group = response.matches[0][0].strip rescue get_group(response.user.name)
+        stats = get_coffee_stats(group)
+        response.reply("Who owes whom?\n--\n#{stats.map{|s| "#{s[0]}: #{s[1]}"}.join("\n")}")
       end
 
       #######
       private
       #######
+
+      def get_coffee_stats(group)
+        JSON.parse(redis.get("stats:#{group}")) rescue {}
+      end
+
+      def set_coffee_stats(group,stats)
+        redis.set("stats:#{group}",stats.to_json)
+      end
 
       def initialize_user_redis(user)
         if redis.get("settings:#{user}").nil?
@@ -274,7 +301,7 @@ module Lita
 
       def clear_orders(group)
         set_timeout(group)
-        redis.set("orders:#{group}",[])
+        redis.del("orders:#{group}")
       end
 
       def send_coffee_message(user,purchaser,message)
