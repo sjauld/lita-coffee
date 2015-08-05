@@ -1,3 +1,4 @@
+$LOAD_PATH.unshift(File.expand_path('../lib', __FILE__))
 require 'lita-coffee/version'
 
 Gem::Specification.new do |spec|
