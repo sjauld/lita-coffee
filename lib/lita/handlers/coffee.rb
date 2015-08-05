@@ -18,108 +18,215 @@ module Lita
         @@DEFAULT_COFFEE  = config.default_coffee
       end
 
+      # ---------------
+      # Nice new routes
+      # ---------------
+
+      # Welcome new users
       route(
-        /^\(?coffee\)?(\s+\-[bcdgist]?|\s+\+)?(.*)/i,
-        :coffee,
+        /coffee/i,
+        :init_user,
+      )
+
+      # Order a coffee
+      route(
+        /^\s*\(?coffee\)?\s+\+\s*$/i,
+        :get_me_a_coffee,
+        help: {
+          'coffee +'                    => "Order a coffee",
+        }
+      )
+
+      # Cancel your order
+      route(
+        /^\s*\(?coffee\)?\s+\-c\s*$/i,
+        :cancel_order,
+        help: {
+          'coffee -c'                   => "Cancel your order",
+        }
+      )
+
+      # List orders
+      route(
+        /^\s*\(?coffee\)?\s*$/i,
+        :list_orders,
         help: {
           'coffee'                      => "List the orders for your group",
+        }
+      )
+
+      # Display profile informatino
+      route(
+        /^\s*\(?coffee\)?\s+\-i\s*$/i,
+        :display_profile,
+        help: {
           'coffee -i'                   => "Display your profile",
+        }
+      )
+
+      # Set preferences
+      route(
+        /^\s*\(?coffee\)?\s+\-s\s+(.*)$/i,
+        :set_prefs,
+        help: {
           'coffee -s Colombian Filter'  => "Set your coffee preference",
-          'coffee -g Cool Kids'         => "Change your group",
-          'coffee +'                    => "Order a coffee",
-          'coffee -c'                   => "Cancel your order",
+        }
+      )
+
+      # Set group
+      route(
+        /^\s*\(?coffee\)?\s+\-g\s+(.*)$/i,
+        :set_group,
+        help: {
+          'coffee -g Cool Kids'  => "Change your group",
+        }
+      )
+
+      # Buy coffees
+      route(
+        /^\s*\(?coffee\)?\s+\-b\s*(.*)$/i,
+        :buy_coffees,
+        help: {
           'coffee -b You owe me one!'   => "Buy coffee for your group, clear the orders and send a message to each coffee drinker",
+        }
+      )
+
+      # Display system settings
+      route(
+        /^\s*\(?coffee\)?\s+\-t\s*(.*)$/i,
+        :system_settings,
+        help: {
           'coffee -t'                   => "Display system settings",
+        }
+      )
+
+      # Delete me
+      route(
+        /^\s*\(?coffee\)?\s+\-d\s*(.*)$/i,
+        :delete_me,
+        help: {
           'coffee -d'                   => "Delete you from the coffee system",
         }
       )
 
-      def coffee(response)
-        get_settings    = response.matches[0][0].strip == "-i"  rescue false
-        set_coffee      = response.matches[0][0].strip == "-s"  rescue false
-        change_group    = response.matches[0][0].strip == "-g"  rescue false
-        order           = response.matches[0][0].strip == "+"   rescue false
-        cancel          = response.matches[0][0].strip == "-c"  rescue false
-        buy_coffee      = response.matches[0][0].strip == "-b"  rescue false
-        system_settings = response.matches[0][0].strip == "-t"  rescue false
-        delete_me       = response.matches[0][0].strip == "-d"  rescue false
+      # List all groups
+      route(
+        /^\s*\(?coffee\)?\s+\-l\s*(.*)$/i,
+        :list_groups,
+        help: {
+          'coffee -l'                   => "List the available coffee groups",
+        }
+      )
 
-        preference      = response.matches[0][1].strip          rescue nil
+      # Setup new users
+      def init_user(response)
+        response.reply("Welcome to coffee! You have been added to the #{@@DEFAULT_GROUP} group with an order of #{@@DEFAULT_COFFEE}. Type help coffee for help.") if initialize_user_redis(response.user.name) == :new_user
+      end
 
-        my_user = response.user.name
-        group = get_group(my_user)
-
-        # Setup new users
-        response.reply("Welcome to coffee! You have been added to the #{@@DEFAULT_GROUP} group with an order of #{@@DEFAULT_COFFEE}. Type help coffee for help.") if initialize_user_redis(my_user) == :new_user
-
-        # Retrieve my preference
-        if get_settings
-          settings = get_settings(my_user)
-          response.reply("Your current coffee is #{settings['coffee']}. You are in the #{settings['group']} group.")
-        # Set my coffee
-        elsif set_coffee
-          result = set_coffee(my_user,preference)
-          if result == "OK"
-            response.reply("Coffee set to #{preference}")
-          else
-            response.reply("(sadpanda) Failed to set your coffee for some reason: #{result.inspect}")
-          end
-        # Delete me altogether
-        elsif delete_me
-          result = delete_user(my_user)
-          if result == 1
-            response.reply("You have been deleted from coffee")
-          else
-            response.reply("(sadpanda) Failed to delete you from coffee for some reason: #{result.inspect}")
-          end
-        # Change my coffee group
-        elsif change_group
-          result = set_coffee_group(my_user,preference)
-          if result == "OK"
-            response.reply("Group set to #{preference}")
-          else
-            response.reply("(sadpanda) Failed to set your coffee group for some reason: #{result.inspect}")
-          end
-        # Order a coffee
-        elsif order
-          result = order_coffee(my_user)
-          if result == "OK"
-            response.reply("Ordered you a coffee")
-          else
-            response.reply("(sadpanda) Failed to order your coffee for some reason: #{result.inspect}")
-          end
-        # Cancel a coffee
-        elsif cancel
-          result = cancel_coffee(my_user)
-          if result == "OK"
-            response.reply("Cancelled your coffee")
-          else
-            response.reply("(sadpanda) Failed to cancel your coffee for some reason: #{result.inspect}")
-          end
-        # Buy the coffees and clear the orders
-        elsif buy_coffee
-          response.reply("Thanks for ordering the coffee for #{group}!\n--")
-          get_orders(group).each do |order|
-            response.reply("#{order}: #{get_coffee(order)}")
-            send_coffee_message(order,my_user,preference) unless order == my_user
-          end
-          result = clear_orders(group)
-          if result == "OK"
-            response.reply("Cleared all orders for #{group}")
-          else
-            response.reply("(sadpanda) Failed to clear the orders for some reason: #{result.inspect}")
-          end
-        # tests
-        elsif system_settings
-          response.reply("Default coffee: #{@@DEFAULT_COFFEE}, Default group: #{@@DEFAULT_GROUP}")
-        # List the orders
+      # Order coffee
+      def get_me_a_coffee(response)
+        user = response.user.name
+        group = get_group(user)
+        orders = get_orders(group)
+        orders << user
+        orders.uniq!
+        result = redis.set("orders:#{group}",orders.to_json)
+        if result == "OK"
+          response.reply("Ordered you a coffee")
         else
-          response.reply("Current orders for #{group}:-\n--")
-          get_orders(group).each do |order|
-            response.reply("#{order}: #{get_coffee(order)}")
-          end
+          response.reply("(sadpanda) Failed to order your coffee for some reason: #{result.inspect}")
         end
+      end
 
+      # Cancel coffee order
+      def cancel_order(response)
+        group = get_group(response.user.name)
+        orders = get_orders(group)
+        orders.delete(response.user.name)
+        result = redis.set("orders:#{group}",orders.to_json)
+        if result == "OK"
+          response.reply("Cancelled your coffee")
+        else
+          response.reply("(sadpanda) Failed to cancel your coffee for some reason: #{result.inspect}")
+        end
+      end
+
+      # List the coffee orders for your group
+      def list_orders(response)
+        group = get_group(response.user.name)
+        response.reply("Current orders for #{group}:-\n--")
+        get_orders(group).each do |order|
+          response.reply("#{order}: #{get_coffee(order)}")
+        end
+      end
+
+      # Display profile
+      def display_profile(response)
+        settings = get_settings(response.user.name)
+        response.reply("Your current coffee is #{settings['coffee']}. You are in the #{settings['group']} group.")
+      end
+
+      # Set coffee preference
+      # TODO: a single method to update user info
+      def set_prefs(response)
+        preference = response.matches[0][0].strip rescue nil
+        result = update_user_coffee(response.user.name,preference)
+        if result == "OK"
+          response.reply("Coffee set to #{preference}")
+        else
+          response.reply("(sadpanda) Failed to set your coffee for some reason: #{result.inspect}")
+        end
+      end
+
+      # Set coffee group
+      # TODO: merge with coffee preference
+      def set_group(response)
+        preference = response.matches[0][0].strip rescue nil
+        result = set_coffee_group(response.user.name,preference)
+        if result == "OK"
+          response.reply("Group set to #{preference}")
+        else
+          response.reply("(sadpanda) Failed to set your coffee group for some reason: #{result.inspect}")
+        end
+      end
+
+      # Buy all the coffee for your group
+      def buy_coffees(response)
+        puts "Running buy_coffees"
+        group = get_group(response.user.name)
+        message = response.matches[0][0].strip rescue nil
+        response.reply("Thanks for ordering the coffee for #{group}!\n--")
+        get_orders(group).each do |order|
+          response.reply("#{order}: #{get_coffee(order)}")
+          send_coffee_message(order,response.user.name,message) unless order == response.user.name
+        end
+        result = clear_orders(group)
+        if result == "OK"
+          response.reply("Cleared all orders for #{group}")
+        else
+          response.reply("(sadpanda) Failed to clear the orders for some reason: #{result.inspect}")
+        end
+      end
+
+      # Display the system settings
+      def system_settings(response)
+        response.reply("Default coffee: #{@@DEFAULT_COFFEE}, Default group: #{@@DEFAULT_GROUP}")
+      end
+
+      # Delete a user
+      def delete_me(response)
+        result = redis.del("settings:#{response.user.name}")
+        if result == 1
+          response.reply("You have been deleted from coffee")
+        else
+          response.reply("(sadpanda) Failed to delete you from coffee for some reason: #{result.inspect}")
+        end
+      end
+
+      # List groups
+      def list_groups(response)
+        groups = redis.keys('orders:*')
+        response.reply("The following groups are active:-\n--\n#{groups.map{|g| g.split(':')[1]}.join("\n")}")
       end
 
       #######
@@ -127,66 +234,44 @@ module Lita
       #######
 
       def initialize_user_redis(user)
-        if redis.get("settings-#{user}").nil?
-          redis.set("settings-#{user}",{group: @@DEFAULT_GROUP, coffee: @@DEFAULT_COFFEE}.to_json)
+        if redis.get("settings:#{user}").nil?
+          redis.set("settings:#{user}",{group: @@DEFAULT_GROUP, coffee: @@DEFAULT_COFFEE}.to_json)
           return :new_user
         else
           return :existing_user
         end
       end
 
-      def delete_user(user)
-        redis.del("settings-#{user}")
-      end
-
       def get_settings(user)
-        JSON.parse(redis.get("settings-#{user}")) rescue {group: @@DEFAULT_GROUP, coffee: @@DEFAULT_COFFEE}
+        JSON.parse(redis.get("settings:#{user}")) rescue {group: @@DEFAULT_GROUP, coffee: @@DEFAULT_COFFEE}
       end
 
       def get_orders(group)
-        JSON.parse(redis.get("#{group}-orders")) rescue []
+        JSON.parse(redis.get("orders:#{group}")) rescue []
       end
 
       def get_coffee(user)
-        JSON.parse(redis.get("settings-#{user}"))['coffee'] rescue @@DEFAULT_COFFEE
+        JSON.parse(redis.get("settings:#{user}"))['coffee'] rescue @@DEFAULT_COFFEE
       end
 
       def get_group(user)
-        JSON.parse(redis.get("settings-#{user}"))['group'] rescue @@DEFAULT_GROUP
+        JSON.parse(redis.get("settings:#{user}"))['group'] rescue @@DEFAULT_GROUP
       end
 
-      def set_coffee(user,coffee)
+      def update_user_coffee(user,coffee)
         my_settings = get_settings(user)
         my_settings[:coffee] = coffee
-        redis.set("settings-#{user}",my_settings.to_json)
+        redis.set("settings:#{user}",my_settings.to_json)
       end
 
       def set_coffee_group(user,group)
         my_settings = get_settings(user)
         my_settings[:group] = group
-        redis.set("settings-#{user}",my_settings.to_json)
-      end
-
-      def order_coffee(user)
-        group = get_group(user)
-        Lita.logger.debug("Group: #{group}")
-        orders = get_orders(group)
-        Lita.logger.debug("Orders: #{orders}")
-        orders << user
-        orders.uniq!
-        Lita.logger.debug("New orders: #{orders}")
-        redis.set("#{group}-orders",orders.to_json)
-      end
-
-      def cancel_coffee(user)
-        group = get_group(user)
-        orders = get_orders(group)
-        orders.delete(user)
-        redis.set("#{group}-orders",orders.to_json)
+        redis.set("settings:#{user}",my_settings.to_json)
       end
 
       def clear_orders(group)
-        redis.set("#{group}-orders",[])
+        redis.set("orders:#{group}",[])
       end
 
       def send_coffee_message(user,purchaser,message)

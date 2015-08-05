@@ -1,10 +1,31 @@
 require "spec_helper"
-#TODO: write this stuff
 
 describe Lita::Handlers::Coffee, lita_handler: true do
 
-  it { is_expected.to route('(coffee)').to(:coffee) }
-  it { is_expected.to route('coffee').to(:coffee) }
+  # Sample office
+  SAMPLE_DATA = [
+    {name: 'stu', group: 'cool kids', coffee: 'Colombian filter'},
+    {name: 'joel', group: 'cool kids', coffee: 'Strong cap w/ 1/2 sugar'},
+    {name: 'arun', group: 'cool kids', coffee: 'Warragamba highball'},
+    {name: 'danielle', group: 'latte socialists', coffee: 'Latte'},
+    {name: 'jack', group: 'latte socialists', coffee: 'Latte'},
+    {name: 'john', group: 'latte socialists', coffee: 'Latte'},
+    {name: 'alex', group: 'latte socialists', coffee: 'Latte'},
+    {name: 'geoff', group: 'traditionalists', coffee: 'Flat white'},
+    {name: 'simon', group: 'traditionalists', coffee: 'Skim flat white'},
+  ]
+
+  it { is_expected.to route('coffee').to(:list_orders) }
+  it { is_expected.to route('I really like coffee!').to(:init_user)}
+  it { is_expected.to route('coffee +').to(:get_me_a_coffee)}
+  it { is_expected.to route('coffee -c').to(:cancel_order)}
+  it { is_expected.to route('coffee -i').to(:display_profile)}
+  it { is_expected.to route('coffee -s Latte').to(:set_prefs)}
+  it { is_expected.to route('coffee -g Testers').to(:set_group)}
+  it { is_expected.to route('coffee -b This one is on me :)').to(:buy_coffees)}
+  it { is_expected.to route('coffee -t').to(:system_settings)}
+  it { is_expected.to route('coffee -d').to(:delete_me)}
+  it { is_expected.to route('coffee -l').to(:list_groups)}
 
   describe '#coffee' do
     before{robot.trigger(:loaded)}
@@ -39,20 +60,18 @@ describe Lita::Handlers::Coffee, lita_handler: true do
     end
 
     it 'changes my coffee group' do
-      send_message("coffee -g testing team")
+      set_prefs('stu',{group: 'testing team'})
       expect(replies.last).to eq("Group set to testing team")
-      send_message("coffee -i")
+      check_prefs('stu')
       expect(replies.last).to end_with("You are in the testing team group.")
     end
 
     it 'cancels my order' do
-      send_message("coffee +")
-      order_a_coffee('stu')
-      order_a_coffee('joel')
-      expect(coffees_in_the_queue).to eq(3)
-      send_message("coffee -c")
+      populate_the_database
+      expect(coffees_in_the_queue('cool kids')).to eq(3)
+      cancel_order('stu')
       expect(replies.last).to eq("Cancelled your coffee") #TODO: check that my name has been removed from the queue
-      expect(coffees_in_the_queue).to eq(2)
+      expect(coffees_in_the_queue('cool kids')).to eq(2)
     end
 
     it 'deletes me from the system' do
@@ -66,24 +85,63 @@ describe Lita::Handlers::Coffee, lita_handler: true do
     end
 
     it 'buys the coffees and clears the queue' do
-      order_a_coffee('stu')
-      order_a_coffee('joel')
-      send_message("coffee -b")
+      populate_the_database
+      buy_coffees_for('cool kids')
       expect(replies.last).to start_with("Cleared all orders")
       send_message("coffee")
       expect(replies.last).to end_with("--")
-      expect(replies.select{|x| x == "Test User has bought you a coffee!"}.count).to eq(2)
+      expect(replies.select{|x| x == "Test User has bought you a coffee!"}.count).to eq(3)
     end
 
-    def order_a_coffee(user)
-      user = Lita::User.create(1,name: user)
+    it 'lists the available groups' do
+      populate_the_database
+      send_message("coffee -l")
+      expect(replies.last).to start_with("The following groups are active:-")
+    end
+
+    def set_prefs(name,opts={})
+      user = init_user(name)
+      send_message("coffee -g #{opts[:group]}", as: user) unless opts[:group].nil?
+      send_message("coffee -s #{opts[:coffee]}", as: user) unless opts[:coffee].nil?
+    end
+
+    def check_prefs(name)
+      user = init_user(name)
+      send_message("coffee -i", as: user)
+    end
+
+    def order_a_coffee(name)
+      user = init_user(name)
       send_message('coffee +', as: user)
     end
 
-    def coffees_in_the_queue
-      send_message('coffee')  
+    def cancel_order(name)
+      user = init_user(name)
+      send_message('coffee -c', as: user)
+    end
+
+    def coffees_in_the_queue(group)
+      send_message("coffee -g #{group}")
+      send_message("coffee")
       replies.reverse.slice(0,replies.reverse.index{|x| ( x =~ /^Current orders/ ) == 0}).count
     end
+
+    def populate_the_database
+      SAMPLE_DATA.each do |x|
+        set_prefs(x[:name],{coffee: x[:coffee],group: x[:group]})
+        order_a_coffee(x[:name])
+      end
+    end
+
+    def init_user(name)
+      Lita::User.create(1,name: name)
+    end
+
+    def buy_coffees_for(group)
+      send_message("coffee -g #{group}")
+      send_message("coffee -b")
+    end
+
 
 
 
