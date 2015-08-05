@@ -18,6 +18,7 @@ describe Lita::Handlers::Coffee, lita_handler: true do
   it { is_expected.to route('coffee').to(:list_orders) }
   it { is_expected.to route('I really like coffee!').to(:init_user)}
   it { is_expected.to route('coffee +').to(:get_me_a_coffee)}
+  it { is_expected.to route('coffee + cool dudes').to(:get_me_a_coffee)}
   it { is_expected.to route('coffee -c').to(:cancel_order)}
   it { is_expected.to route('coffee -i').to(:display_profile)}
   it { is_expected.to route('coffee -s Latte').to(:set_prefs)}
@@ -40,11 +41,16 @@ describe Lita::Handlers::Coffee, lita_handler: true do
       expect(replies.last).to start_with("Current orders")
     end
 
-    it 'orders me a coffee if I ask it!' do
+    it 'orders you a coffee if you ask it!' do
       send_message("coffee +")
-      expect(replies.last).to eq("Ordered you a coffee")
+      expect(replies.last).to eq("Ordered you a coffee from coffee-lovers")
       send_message("coffee")
       expect(replies.last).to start_with("Test User:")
+    end
+
+    it 'orders me a coffee from a different group too' do
+      send_message("coffee + testers")
+      expect(replies.last).to eq("Ordered you a coffee from testers")
     end
 
     it 'displays my profile settings' do

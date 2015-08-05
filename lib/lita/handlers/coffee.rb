@@ -11,11 +11,13 @@ module Lita
       # default_coffee - the coffee we will order if users don't specify what they would like
       config :default_group, type: String, default: 'coffee-lovers'
       config :default_coffee, type: String, default: 'Single origin espresso'
+      config :default_timeout, type: Integer, default: 604800
       on :loaded, :set_constants
 
       def set_constants(payload)
         @@DEFAULT_GROUP   = config.default_group
         @@DEFAULT_COFFEE  = config.default_coffee
+        @@DEFAULT_GROUP_TIMEOUT = config.default_timeout
       end
 
       # ---------------
@@ -30,7 +32,7 @@ module Lita
 
       # Order a coffee
       route(
-        /^\s*\(?coffee\)?\s+\+\s*$/i,
+        /^\s*\(?coffee\)?\s+\+\s*(\S.*)?$/i,
         :get_me_a_coffee,
         help: {
           'coffee +'                    => "Order a coffee",
@@ -125,14 +127,12 @@ module Lita
 
       # Order coffee
       def get_me_a_coffee(response)
-        user = response.user.name
-        group = get_group(user)
-        orders = get_orders(group)
-        orders << user
-        orders.uniq!
+        group = response.matches[0][0].strip rescue get_group(response.user.name)
+        orders = (get_orders(group) + [response.user.name]).uniq
         result = redis.set("orders:#{group}",orders.to_json)
+        set_timeout(group)
         if result == "OK"
-          response.reply("Ordered you a coffee")
+          response.reply("Ordered you a coffee from #{group}")
         else
           response.reply("(sadpanda) Failed to order your coffee for some reason: #{result.inspect}")
         end
@@ -144,6 +144,7 @@ module Lita
         orders = get_orders(group)
         orders.delete(response.user.name)
         result = redis.set("orders:#{group}",orders.to_json)
+        set_timeout(group)
         if result == "OK"
           response.reply("Cancelled your coffee")
         else
@@ -247,6 +248,7 @@ module Lita
       end
 
       def get_orders(group)
+        set_timeout(group)
         JSON.parse(redis.get("orders:#{group}")) rescue []
       end
 
@@ -271,6 +273,7 @@ module Lita
       end
 
       def clear_orders(group)
+        set_timeout(group)
         redis.set("orders:#{group}",[])
       end
 
@@ -281,6 +284,10 @@ module Lita
         msg.reply(message) # what happens if message is nil?
       rescue => e
         Lita.logger.error("Coffee#send_coffee_message raised #{e.class}: #{e.message}\n#{e.backtrace}")
+      end
+
+      def set_timeout(group)
+        redis.expire("orders:#{group}",@@DEFAULT_GROUP_TIMEOUT)
       end
 
 
