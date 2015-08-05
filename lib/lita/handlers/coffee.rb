@@ -122,7 +122,7 @@ module Lita
 
       # Coffee stats a.k.a. who owes whom?
       route(
-        /^\s*\(?coffee\)?\s+\-w\s*(\S.*)$/i,
+        /^\s*\(?coffee\)?\s+\-w\s*(\S.*)?$/i,
         :show_stats,
         help: {
           'coffee -w'                   => "Show stats for a group",
