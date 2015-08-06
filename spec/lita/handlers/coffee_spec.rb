@@ -22,7 +22,7 @@ describe Lita::Handlers::Coffee, lita_handler: true do
   it { is_expected.to route('coffee -c').to(:cancel_order)}
   it { is_expected.to route('coffee -i').to(:display_profile)}
   it { is_expected.to route('coffee -s Latte').to(:set_prefs)}
-  it { is_expected.to route('coffee -g Testers').to(:set_group)}
+  it { is_expected.to route('coffee -g Testers').to(:set_prefs)}
   it { is_expected.to route('coffee -b This one is on me :)').to(:buy_coffees)}
   it { is_expected.to route('coffee -t').to(:system_settings)}
   it { is_expected.to route('coffee -d').to(:delete_me)}
@@ -60,14 +60,14 @@ describe Lita::Handlers::Coffee, lita_handler: true do
 
     it 'sets my coffee preference' do
       send_message("coffee -s decaf soy cappuccino")
-      expect(replies.last).to eq("Coffee set to decaf soy cappuccino")
+      expect(replies.last).to eq("Updated your coffee to decaf soy cappuccino")
       send_message("coffee -i")
       expect(replies.last).to start_with("Your current coffee is decaf soy cappuccino")
     end
 
     it 'changes my coffee group' do
       set_prefs('stu',{group: 'testing team'})
-      expect(replies.last).to eq("Group set to testing team")
+      expect(replies.last).to eq("Updated your group to testing team")
       check_prefs('stu')
       expect(replies.last).to end_with("You are in the testing team group.")
     end

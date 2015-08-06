@@ -68,18 +68,10 @@ module Lita
 
       # Set preferences
       route(
-        /^\s*\(?coffee\)?\s+\-s\s+(.*)$/i,
+        /^\s*\(?coffee\)?\s+\-([sg])\s+(.*)$/i,
         :set_prefs,
         help: {
           'coffee -s Colombian Filter'  => "Set your coffee preference",
-        }
-      )
-
-      # Set group
-      route(
-        /^\s*\(?coffee\)?\s+\-g\s+(.*)$/i,
-        :set_group,
-        help: {
           'coffee -g Cool Kids'  => "Change your group",
         }
       )
@@ -179,25 +171,10 @@ module Lita
       # Set coffee preference
       # TODO: a single method to update user info
       def set_prefs(response)
-        preference = response.matches[0][0].strip rescue nil
-        result = update_user_coffee(response.user.name,preference)
-        if result == "OK"
-          response.reply("Coffee set to #{preference}")
-        else
-          response.reply("(sadpanda) Failed to set your coffee for some reason: #{result.inspect}")
-        end
-      end
-
-      # Set coffee group
-      # TODO: merge with coffee preference
-      def set_group(response)
-        preference = response.matches[0][0].strip rescue nil
-        result = set_coffee_group(response.user.name,preference)
-        if result == "OK"
-          response.reply("Group set to #{preference}")
-        else
-          response.reply("(sadpanda) Failed to set your coffee group for some reason: #{result.inspect}")
-        end
+        mapping = {'g' => :group, 's' => :coffee}
+        setting = mapping.detect{|k,v| k == response.matches[0][0]}[1]
+        preference = response.matches[0][1].strip rescue nil
+        update_preference(response,setting,preference)
       end
 
       # Buy all the coffee for your group
@@ -287,16 +264,15 @@ module Lita
         JSON.parse(redis.get("settings:#{user}"))['group'] rescue @@DEFAULT_GROUP
       end
 
-      def update_user_coffee(user,coffee)
-        my_settings = get_settings(user)
-        my_settings[:coffee] = coffee
-        redis.set("settings:#{user}",my_settings.to_json)
-      end
-
-      def set_coffee_group(user,group)
-        my_settings = get_settings(user)
-        my_settings[:group] = group
-        redis.set("settings:#{user}",my_settings.to_json)
+      def update_preference(response,setting,preference)
+        my_settings = get_settings(response.user.name)
+        my_settings[setting] = preference
+        result = redis.set("settings:#{response.user.name}",my_settings.to_json)
+        if result == "OK"
+          response.reply("Updated your #{setting} to #{preference}")
+        else
+          response.reply("(sadpanda) Failed to update your #{setting} for some reason: #{result.inspect}")
+        end
       end
 
       def clear_orders(group)
