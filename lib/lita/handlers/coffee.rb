@@ -223,7 +223,20 @@ module Lita
       def show_stats(response)
         group = response.matches[0][0].strip rescue get_group(response.user.name)
         stats = get_coffee_stats(group)
-        response.reply("Who owes whom?\n--\n#{stats.map{|s| "#{s[0]}: #{s[1]}"}.join("\n")}")
+        owing = []
+        owed = []
+        stats.each do |stat|
+          # owing first
+          if stat[1] <= 0
+            owing << stat
+          else
+            owed << stat
+          end
+        end
+        owing.sort!{|a,b| b[1] <=> a[1]}
+        owed.sort!{|a,b| b[1] <=> a[1]}
+        response.reply("Coffees owed to others\n--\n#{owing.map{|s| "#{s[0]}: #{s[1]}"}.join("\n")}")
+        response.reply("Coffees to be repaid\n--\n#{owed.map{|s| "#{s[0]}: #{s[1]}"}.join("\n")}")
       end
 
       #######
