@@ -10,6 +10,8 @@ Add lita-coffee to your Lita instance's Gemfile:
 gem "lita-coffee"
 ```
 
+[![Code Climate](https://codeclimate.com/github/sjauld/lita-coffee/badges/gpa.svg)](https://codeclimate.com/github/sjauld/lita-coffee)
+
 ## Configuration
 
 Set the default settings in your lita_config.rb (if you like)
