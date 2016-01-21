@@ -10,7 +10,7 @@ Add lita-coffee to your Lita instance's Gemfile:
 gem "lita-coffee"
 ```
 
-[![Code Climate](https://codeclimate.com/github/sjauld/lita-coffee/badges/gpa.svg)](https://codeclimate.com/github/sjauld/lita-coffee)
+[![Code Climate](https://codeclimate.com/github/sjauld/lita-coffee/badges/gpa.svg)](https://codeclimate.com/github/sjauld/lita-coffee) [![Coverage Status](https://coveralls.io/repos/github/sjauld/lita-coffee/badge.svg?branch=master)](https://coveralls.io/github/sjauld/lita-coffee?branch=master)
 
 ## Configuration
 
