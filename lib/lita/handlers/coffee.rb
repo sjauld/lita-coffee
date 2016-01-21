@@ -233,8 +233,9 @@ module Lita
             owed << stat
           end
         end
-        owing.sort!{|a,b| b[1] <=> a[1]}
-        owed.sort!{|a,b| b[1] <=> a[1]}
+        owing.sort!{|a,b| a[1] <=> b[1]} # Negative for owing, ergo sort in ascending order
+        owed.sort!{|a,b| b[1] <=> a[1]}  # Positive for owed, ergo sort in descending order to show who is owed most
+        # Provide a response
         response.reply("Coffees owed to others\n--\n#{owing.map{|s| "#{s[0]}: #{s[1]}"}.join("\n")}")
         response.reply("Coffees to be repaid\n--\n#{owed.map{|s| "#{s[0]}: #{s[1]}"}.join("\n")}")
       end
