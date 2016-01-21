@@ -27,6 +27,7 @@ describe Lita::Handlers::Coffee, lita_handler: true do
   it { is_expected.to route('coffee -t').to(:system_settings)}
   it { is_expected.to route('coffee -d').to(:delete_me)}
   it { is_expected.to route('coffee -l').to(:list_groups)}
+  it { is_expected.to route('coffee -w').to(:show_stats)}
 
   describe '#coffee' do
     before{robot.trigger(:loaded)}
@@ -109,7 +110,7 @@ describe Lita::Handlers::Coffee, lita_handler: true do
       populate_the_database
       buy_coffees_for('cool kids')
       send_message("coffee -w cool kids")
-      expect(replies.last).to start_with("Who owes whom?")
+      expect(replies.last).to start_with("Coffees to be repaid")
     end
 
     def set_prefs(name,opts={})
